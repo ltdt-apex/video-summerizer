@@ -6,3 +6,4 @@ openai
 python-multipart
 pydantic
 pytube
+youtube-transcript-api

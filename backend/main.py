@@ -5,6 +5,9 @@ import yt_dlp
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from youtube_transcript_api import YouTubeTranscriptApi
+import re
+from typing import Optional
 
 app = FastAPI()
 
@@ -27,7 +30,39 @@ app.add_middleware(
 class VideoRequest(BaseModel):
     url: str
 
-def get_video_transcript(url: str) -> str:
+def extract_video_id(url: str) -> str:
+    """Extract video ID from YouTube URL."""
+    patterns = [
+        r'(?:v=|\/)([0-9A-Za-z_-]{11}).*',
+        r'(?:embed\/)([0-9A-Za-z_-]{11})',
+        r'(?:youtu\.be\/)([0-9A-Za-z_-]{11})'
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    raise ValueError("Could not extract video ID from URL")
+
+def get_video_transcript_without_whisper(url: str) -> Optional[str]:
+    """Get video transcript directly from YouTube without using Whisper."""
+    # Extract video ID from URL
+    video_id = extract_video_id(url)
+    
+    # Get available transcripts
+    try:
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+    except Exception as e:
+        print(f"can't get transcript for {url}")
+        return None
+    
+    full_transcript = ""
+    for transcript in transcript_list:
+        full_transcript += transcript["text"] + "\n"
+
+    return full_transcript
+
+def get_video_transcript_with_whisper(url: str) -> str:
     try:
         # Download audio from YouTube video
         ydl_opts = {
@@ -91,6 +126,8 @@ async def summarize_video(request: VideoRequest):
     if request.url == "test":
         return {"summary": get_test_summary()}
     
-    transcript = get_video_transcript(request.url)
+    transcript = get_video_transcript_without_whisper(request.url)
+    if transcript is None:
+        transcript = get_video_transcript_with_whisper(request.url)
     summary = summarize_with_openai(transcript)
     return {"summary": summary} 
