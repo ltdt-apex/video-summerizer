@@ -16,6 +16,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # print("OPENAI_API_KEY", OPENAI_API_KEY)
 client = OpenAI()
 
+# Load the prompt template
+with open("prompt.txt", "r") as f:
+    PROMPT_TEMPLATE = f.read()
 
 # Configure CORS
 app.add_middleware(
@@ -99,13 +102,15 @@ def get_video_transcript_with_whisper(url: str) -> str:
 
 def summarize_with_openai(transcript: str) -> str:
     try:
-        context = "Please provide a comprehensive summary of this video transcript."
+        # Format the prompt with the transcript
+        formatted_prompt = PROMPT_TEMPLATE.format(transcript=transcript)
+        print("formatted_prompt", formatted_prompt)
         
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that summarizes video transcripts."},
-                {"role": "user", "content": f"{context}\n\nTranscript:\n{transcript}"}
+                {"role": "user", "content": formatted_prompt}
             ],
             max_tokens=1000
         )
