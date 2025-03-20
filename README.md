@@ -1,6 +1,11 @@
 # YouTube Video Summarizer
 
-A web application that summarizes YouTube videos using LLM. The application features a ChatGPT-like interface where users can input a YouTube URL and receive an AI-generated summary of the video content.
+This project was born out of a curiosity to explore and understand how modern video summarization works. By combining YouTube's transcript API, OpenAI's Whisper for speech-to-text (as a fallback), and GPT for summarization, it demonstrates a practical implementation of current AI technologies to solve the common problem of quickly understanding video content.
+
+The architecture showcases how different AI services can be chained together:
+- YouTube's API provides native transcripts when available
+- Whisper handles speech-to-text conversion when needed
+- GPT processes the raw transcript into coherent, structured summaries
 
 ## Prerequisites
 
